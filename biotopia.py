@@ -622,6 +622,14 @@ if __name__  == "__main__":
             else:
                 nearest = None
 
+            # clear references, if creatures are dead
+            if oldest not in zoo.creatures:
+                oldest = None
+            if most_energetic not in zoo.creatures:
+                most_energetic = None
+            if most_mouths not in zoo.creatures:
+                most_mouths = None
+
             # find oldest and identify
             creature = max(zoo.creatures, key=lambda c: c.age)
             oldest = creature if oldest is None or oldest.age < creature.age else oldest
