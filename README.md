@@ -15,14 +15,15 @@ statistics tendency of complexity increase in those creature's morphology.
                        [--start-food AMOUNT] [--start-keys AMOUNT]
                        [--start-population AMOUNT]
                        [--mutation-probability PROPORTION] [--chart-update CYCLES]
+                       [--wrap-vertically] [--wrap-horizontally]
 
     Biotopia - The Artificial Life Simulator
 
     optional arguments:
       -h, --help            show this help message and exit
-      --width WIDTH, -w WIDTH
+      --width WIDTH, -wd WIDTH
                             the simulation environment width
-      --height HEIGHT, -t HEIGHT
+      --height HEIGHT, -ht HEIGHT
                             the simulation environment height
       --ancestors-energy ENERGY, -a ENERGY
                             the amount of energy the ancestors starts with
@@ -45,6 +46,10 @@ statistics tendency of complexity increase in those creature's morphology.
                             The chance of random mutation at each reproduction
       --chart-update CYCLES, -c CYCLES
                             Update the population/keys chart period
+      --wrap-vertically, -wv
+                            Whether or not to wrap the environment vertically
+      --wrap-horizontally, -wh
+                            Whether or not to wrap the environment horizontally
 
 ## Main concepts
 

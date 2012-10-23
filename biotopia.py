@@ -437,9 +437,9 @@ if __name__  == "__main__":
 
     # parse arguments, possibly replacing default values
     parser = argparse.ArgumentParser(description="Biotopia - The Artificial Life Simulator")
-    parser.add_argument('--width', '-w', default=800, type=int, metavar='WIDTH',
+    parser.add_argument('--width', '-wd', default=800, type=int, metavar='WIDTH',
                         dest='width', help='the simulation environment width')
-    parser.add_argument('--height', '-t', default=600, type=int, metavar='HEIGHT',
+    parser.add_argument('--height', '-ht', default=600, type=int, metavar='HEIGHT',
                         dest='height', help='the simulation environment height')
     parser.add_argument('--ancestors-energy', '-a', default=2000, type=int, metavar='ENERGY',
                         dest='ancestors_energy', help='the amount of energy the ancestors starts with')
@@ -459,6 +459,10 @@ if __name__  == "__main__":
                         dest='mutation_probability', help="The chance of random mutation at each reproduction")
     parser.add_argument('--chart-update', '-c', default=10, type=int, metavar='CYCLES',
                         dest='chart_update', help="Update the population/keys chart period")
+    parser.add_argument('--wrap-vertically', '-wv', default=False, action='store_true',
+                        dest='wrap_vertically', help="Whether or not to wrap the environment vertically")
+    parser.add_argument('--wrap-horizontally', '-wh', default=False, action='store_true',
+                        dest='wrap_horizontally', help="Whether or not to wrap the environment horizontally")
     args = parser.parse_args()
 
     #: the maximum amount of population or keys
@@ -484,6 +488,8 @@ if __name__  == "__main__":
                    start_keys = args.start_keys,
                    energy_loss = args.energy_loss,
                    energy_gain = args.energy_gain,
+                   wrap_horizontal = args.wrap_horizontally,
+                   wrap_vertical = args.wrap_vertically,
                    mutation_probability = args.mutation_probability)
 
     # initialize simulation
