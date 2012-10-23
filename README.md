@@ -55,8 +55,11 @@ statistics tendency of complexity increase in those creature's morphology.
 
   * Click over the environment: zoom area.
   * `space`: toggle pause simulation.
-  * `r`: start new simulation.
-  * `d`: toggle debug mode (show nearest creature energy and age).
+  * `r`: restart simulation.
+  * `d`: toggle debug mode (show nearest creature energy and age, and some of
+    the best creatures).
+  * `h`: toggle horizontal wrapping.
+  * `v`: toggle vertical wrapping.
 
 ## Main concepts
 

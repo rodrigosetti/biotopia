@@ -436,7 +436,7 @@ class Zoo(object):
 if __name__  == "__main__":
     import sys
     import pygame
-    from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, K_d, KEYDOWN
+    from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, K_d, K_v, K_h, KEYDOWN
     import argparse
 
     # parse arguments, possibly replacing default values
@@ -607,7 +607,7 @@ if __name__  == "__main__":
         # print the nearest creature's information, if debugging:
         if debugging and total_creatures > 0:
             # find out nearest creature energy and age
-            if mouse_pos[1] < height:
+            if 0 <= mouse_pos[0] <= width and 0 <= mouse_pos[1] <= height:
                 nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
                 energy_text = stats_font.render("e: %d" % nearest.energy, False, text_color)
                 age_text =    stats_font.render("a: %d" % nearest.age, False, text_color)
@@ -731,22 +731,29 @@ if __name__  == "__main__":
                 zooming = True
             elif event.type == MOUSEBUTTONUP:
                 zooming = False
-            elif event.type == KEYDOWN and event.key == K_SPACE:
-                # toggle pausing
-                paused = not paused
-            elif event.type == KEYDOWN and event.key == K_d:
-                # toggle debugging
-                debugging = not debugging
-            elif event.type == KEYDOWN and event.key == K_r:
-                # start new simulation!
-                window.fill(background_color)
-                zoo = start_new_simulation()
-                cycle_count = 0
-                # restart debugging references
-                nearest = None
-                most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
-                most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
-                oldest = choice(list(zoo.creatures)) if zoo.creatures else None
+            elif event.type == KEYDOWN:
+                if event.key == K_SPACE:
+                    # toggle pausing
+                    paused = not paused
+                elif event.key == K_h:
+                    # toggle horizontal wrapping
+                    zoo.wrap_horizontal = not zoo.wrap_horizontal
+                elif event.key == K_v:
+                    # toggle vertical wrapping
+                    zoo.wrap_vertical = not zoo.wrap_vertical
+                elif event.key == K_d:
+                    # toggle debugging
+                    debugging = not debugging
+                elif event.key == K_r:
+                    # start new simulation!
+                    window.fill(background_color)
+                    zoo = start_new_simulation()
+                    cycle_count = 0
+                    # restart debugging references
+                    nearest = None
+                    most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
+                    most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
+                    oldest = choice(list(zoo.creatures)) if zoo.creatures else None
 
         # get mouse position
         mouse_pos = pygame.mouse.get_pos()
