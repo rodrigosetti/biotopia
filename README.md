@@ -7,6 +7,43 @@ It works by letting creatures live in a simulated environment, where they must
 compete for food and reproduction. Because of that competition we can observe a
 statistics tendency of complexity increase in those creature's morphology.
 
+## Command line arguments
+
+    usage: biotopia.py [-h] [--width WIDTH] [--height HEIGHT]
+                       [--ancestors-energy ENERGY] [--offspring-energy ENERGY]
+                       [--energy-loss ENERGY] [--energy-gain ENERGY]
+                       [--start-food AMOUNT] [--start-keys AMOUNT]
+                       [--start-population AMOUNT]
+                       [--mutation-probability PROPORTION]
+
+    Biotopia - The Artificial Life Simulator
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --width WIDTH, -w WIDTH
+                            the simulation environment width
+      --height HEIGHT, -t HEIGHT
+                            the simulation environment height
+      --ancestors-energy ENERGY, -a ENERGY
+                            the amount of energy the ancestors starts with
+      --offspring-energy ENERGY, -o ENERGY
+                            at each reproduction, the amount of energy the
+                            offspring starts with
+      --energy-loss ENERGY, -l ENERGY
+                            the quantity of energy lost at each creature's cycle
+      --energy-gain ENERGY, -g ENERGY
+                            the quantity of energy gain at each food eat
+      --start-food AMOUNT, -f AMOUNT
+                            the amount of food the simulation's environment starts
+                            with
+      --start-keys AMOUNT, -k AMOUNT
+                            the amount of key particles the simulation's
+                            environment starts with
+      --start-population AMOUNT, -p AMOUNT
+                            The number of ancestors the simulation starts with
+      --mutation-probability PROPORTION, -m PROPORTION
+                            The chance of random mutation at each reproduction
+
 ## Main concepts
 
 Creatures, in this simulator, are simple beings with a multi-cellular

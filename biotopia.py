@@ -433,55 +433,55 @@ if __name__  == "__main__":
     import sys
     import pygame
     from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, KEYDOWN
+    import argparse
 
-    # the width and heigh of the creature's environment
-    WIDTH = 800
-    HEIGHT = 600
+    # parse arguments, possibly replacing default values
+    parser = argparse.ArgumentParser(description="Biotopia - The Artificial Life Simulator")
+    parser.add_argument('--width', '-w', default=800, type=int, metavar='WIDTH',
+                        dest='width', help='the simulation environment width')
+    parser.add_argument('--height', '-t', default=600, type=int, metavar='HEIGHT',
+                        dest='height', help='the simulation environment height')
+    parser.add_argument('--ancestors-energy', '-a', default=2000, type=int, metavar='ENERGY',
+                        dest='ancestors_energy', help='the amount of energy the ancestors starts with')
+    parser.add_argument('--offspring-energy', '-o', default=1000, type=int, metavar='ENERGY',
+                        dest='offspring_energy', help='at each reproduction, the amount of energy the offspring starts with')
+    parser.add_argument('--energy-loss', '-l', default=1, type=int, metavar='ENERGY',
+                        dest='energy_loss', help="the quantity of energy lost at each creature's cycle")
+    parser.add_argument('--energy-gain', '-g', default=10, type=int, metavar='ENERGY',
+                        dest='energy_gain', help="the quantity of energy gain at each food eat")
+    parser.add_argument('--start-food', '-f', default=50000, type=int, metavar='AMOUNT',
+                        dest='start_food', help="the amount of food the simulation's environment starts with")
+    parser.add_argument('--start-keys', '-k', default=250, type=int, metavar='AMOUNT',
+                        dest='start_keys', help="the amount of key particles the simulation's environment starts with")
+    parser.add_argument('--start-population', '-p', default=250, type=int, metavar='AMOUNT',
+                        dest='start_population', help="The number of ancestors the simulation starts with")
+    parser.add_argument('--mutation-probability', '-m', default=0.2, type=float, metavar='PROPORTION',
+                        dest='mutation_probability', help="The chance of random mutation at each reproduction")
+    args = parser.parse_args()
+
+    #: the maximum amount of population or keys
+    POP_MAX = args.start_keys + args.start_population
+    width = args.width
+    height = args.height
 
     # the width and height of the population/keys chart, located right under
     # the creature's environment. Statistics text will be displayed at the
     # right of the chart.
-    CHART_HEIGHT = 100
-    CHART_WIDTH = 600
-
-    #: the amount of energy the root ancestors starts with.
-    ANCESTORS_ENERGY = 2000
-
-    #: at each reproduction, the amount of energy the offspring starts with.
-    OFFSPRING_ENERGY = 1000
-
-    #: quantity of energy lost at each creature's cycle
-    ENERGY_LOSS = 1
-
-    #: quantity of energy gain at each food eat
-    ENERGY_GAIN = 20
-
-    # the amount of food and key particles the environment starts with.
-    START_FOOD = 50000
-    START_KEYS = 250
-
-    #: the number of root ancestors the simulation starts with. This number,
-    #: summed up with the START_KEYS value, is the maximum population possible.
-    START_POPULATION = 250
-
-    #: the change of random mutation at each reproduction.
-    MUTATION_PROBABILITY = 0.2
-
-    #: the maximum amount of population or keys
-    POP_MAX = START_KEYS + START_POPULATION
+    chart_height = 100
+    chart_width = width - 200
 
     # convenient function to start a new simulation
     def start_new_simulation():
-        return Zoo([ancestor(position = (randint(0,WIDTH), randint(0, HEIGHT)),
-                             energy = ANCESTORS_ENERGY) for i in
-                    xrange(START_POPULATION)],
-                   size = (WIDTH, HEIGHT),
-                   offspring_energy = OFFSPRING_ENERGY,
-                   start_food = START_FOOD,
-                   start_keys = START_KEYS,
-                   energy_loss = ENERGY_LOSS,
-                   energy_gain = ENERGY_GAIN,
-                   mutation_probability = MUTATION_PROBABILITY)
+        return Zoo([ancestor(position = (randint(0,width), randint(0, height)),
+                             energy = args.ancestors_energy) for i in
+                    xrange(args.start_population)],
+                   size = (width, height),
+                   offspring_energy = args.offspring_energy,
+                   start_food = args.start_food,
+                   start_keys = args.start_keys,
+                   energy_loss = args.energy_loss,
+                   energy_gain = args.energy_gain,
+                   mutation_probability = args.mutation_probability)
 
     # initialize simulation
     zoo = start_new_simulation()
@@ -489,7 +489,7 @@ if __name__  == "__main__":
     # initialize pygame stuff
     pygame.init()
     fps_clock = pygame.time.Clock()
-    window = pygame.display.set_mode((WIDTH, HEIGHT + CHART_HEIGHT))
+    window = pygame.display.set_mode((width, height + chart_height))
     pygame.display.set_caption("Biotopia - Artificial Life Simulator")
 
     # colors
@@ -517,11 +517,11 @@ if __name__  == "__main__":
     # main loop
     while True:
         # clear zoo screen
-        pygame.draw.rect(window, background_color, ((0,0),(WIDTH,HEIGHT+1)))
+        pygame.draw.rect(window, background_color, ((0,0),(width,height+1)))
 
         # print each food particle
         for food in zoo.food.iter_unique():
-            if 0 <= food[0] <= WIDTH and 0 <= food[1] <= HEIGHT:
+            if 0 <= food[0] <= width and 0 <= food[1] <= height:
                 window.set_at(food, food_color)
 
         # print each key particle
@@ -542,7 +542,7 @@ if __name__  == "__main__":
             for cell in creature.cells:
                 cell_position = (creature.position[0] + cell[0],
                                  creature.position[1] + cell[1])
-                if 0 <= cell_position[0] <= WIDTH and 0 <= cell_position[1] <= HEIGHT:
+                if 0 <= cell_position[0] <= width and 0 <= cell_position[1] <= height:
                     window.set_at(cell_position, color)
 
             # print mouths and head only if not dieing or not new born
@@ -551,7 +551,7 @@ if __name__  == "__main__":
                 for mouth in creature.mouths:
                     mouth_position = (creature.position[0] + mouth[0],
                                    creature.position[1] + mouth[1])
-                    if 0 <= mouth_position[0] <= WIDTH and 0 <= mouth_position[1] <= HEIGHT:
+                    if 0 <= mouth_position[0] <= width and 0 <= mouth_position[1] <= height:
                         window.set_at(mouth_position,
                                       eating_color if mouth_position in zoo.food else mouth_color)
 
@@ -562,18 +562,18 @@ if __name__  == "__main__":
 
         # draw zoom, if active
         if zooming:
-            sample_point = (min(max(mouse_pos[0] - WIDTH/32, 0), WIDTH - WIDTH/16),
-                            min(max(mouse_pos[1] - HEIGHT/32, 0), HEIGHT - HEIGHT/16))
-            blit_point = (min(max(mouse_pos[0] - WIDTH/8, 0), WIDTH - WIDTH/4),
-                          min(max(mouse_pos[1] - HEIGHT/8, 0), HEIGHT - HEIGHT/4))
+            sample_point = (min(max(mouse_pos[0] - width/32, 0), width - width/16),
+                            min(max(mouse_pos[1] - height/32, 0), height - height/16))
+            blit_point = (min(max(mouse_pos[0] - width/8, 0), width - width/4),
+                          min(max(mouse_pos[1] - height/8, 0), height - height/4))
             zoom_surface = pygame.transform.scale(
                                 window.subsurface((sample_point,
-                                                   (WIDTH/16, HEIGHT/16))),
-                                (WIDTH/4, HEIGHT/4))
+                                                   (width/16, height/16))),
+                                (width/4, height/4))
 
             window.blit(zoom_surface, blit_point)
             pygame.draw.rect(window, zoom_border_color,
-                             (blit_point, (WIDTH/4, HEIGHT/4)), 1)
+                             (blit_point, (width/4, height/4)), 1)
 
         # update screen and fps
         pygame.display.update()
@@ -584,9 +584,9 @@ if __name__  == "__main__":
 
             # draw chart:
             # first, move chart left
-            chart = window.subsurface(((1,HEIGHT+1),
-                                       (CHART_WIDTH-1, CHART_HEIGHT-1))).copy()
-            window.blit(chart, (0, HEIGHT+1))
+            chart = window.subsurface(((1,height+1),
+                                       (chart_width-1, chart_height-1))).copy()
+            window.blit(chart, (0, height+1))
 
             # do some math
             total_creatures = len(zoo.creatures)
@@ -594,14 +594,14 @@ if __name__  == "__main__":
 
             # then, print chart pixels
             pygame.draw.line(window, key_color,
-                             (CHART_WIDTH-1, HEIGHT),
-                             (CHART_WIDTH-1,
-                              HEIGHT + (total_keys * CHART_HEIGHT /  POP_MAX)))
+                             (chart_width-1, height),
+                             (chart_width-1,
+                              height + (total_keys * chart_height /  POP_MAX)))
             pygame.draw.line(window, head_color,
-                             (CHART_WIDTH-1, HEIGHT + CHART_HEIGHT),
-                             (CHART_WIDTH-1,
-                              HEIGHT+CHART_HEIGHT - (total_creatures * CHART_HEIGHT /  POP_MAX)))
-            window.set_at((CHART_WIDTH-1, HEIGHT + CHART_HEIGHT/2),
+                             (chart_width-1, height + chart_height),
+                             (chart_width-1,
+                              height+chart_height - (total_creatures * chart_height /  POP_MAX)))
+            window.set_at((chart_width-1, height + chart_height/2),
                           background_color)
 
             # print some statistics: average age, average mouths, average energy
@@ -634,14 +634,14 @@ if __name__  == "__main__":
             text_cycle  = stats_font.render("cycle: %08d" % cycle_count,
                                             False, text_color, background_color)
 
-            pygame.draw.rect(window, background_color, ((CHART_WIDTH+1, HEIGHT+1),
-                                                        (WIDTH - CHART_WIDTH,
-                                                         CHART_HEIGHT)))
-            window.blit(text_age,    (CHART_WIDTH+10, HEIGHT + 5))
-            window.blit(text_mouths, (CHART_WIDTH+10, HEIGHT + 1*font_size + 5))
-            window.blit(text_energy, (CHART_WIDTH+10, HEIGHT + 2*font_size + 5))
-            window.blit(text_pop,    (CHART_WIDTH+10, HEIGHT + 3*font_size + 5))
-            window.blit(text_cycle,  (CHART_WIDTH+10, HEIGHT + 4*font_size + 5))
+            pygame.draw.rect(window, background_color, ((chart_width+1, height+1),
+                                                        (width - chart_width,
+                                                         chart_height)))
+            window.blit(text_age,    (chart_width+10, height + 5))
+            window.blit(text_mouths, (chart_width+10, height + 1*font_size + 5))
+            window.blit(text_energy, (chart_width+10, height + 2*font_size + 5))
+            window.blit(text_pop,    (chart_width+10, height + 3*font_size + 5))
+            window.blit(text_cycle,  (chart_width+10, height + 4*font_size + 5))
 
             # update simulation
             zoo.step()
