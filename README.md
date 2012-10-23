@@ -90,6 +90,7 @@ These are all valid examples:
     .o.o. .oo.. .o...
     .ooo. .o.o. .ooo.
     ..... .ooo. .o...
+    ..... ..... .....
 
 On the other hand, the following examples are invalid, because the contain
 cycles:
@@ -98,6 +99,7 @@ cycles:
     .o.o. .ooo. .ooo.
     .ooo. .o.o. .o.o.
     .oo.. .ooo. .ooo.
+    ..... ..... .....
 
 At each reproduction (i.e. key particle eating) the offspring will be an exact
 copy of its parent, with a change of random mutation. A mutation is either
@@ -136,6 +138,7 @@ vertical) coefficients respectively:
     .o.o. .oo.. .o...
     .ooo. .o.o. .ooo.
     ..... .ooo. .o...
+    ..... ..... .....
 
 At each cycle, a creature may walk only one pixel in each direction. The actual
 move is draw from a creature's internal cyclic movement, that have the
@@ -143,11 +146,10 @@ following rule:
 
   * A creature always stands still one cycle (i.e. walk (0,0))
   * Then, at each i-th cycle, the creature will have a movement equals to
-    (sign(H) if i < |H| else 0, sign(V) if i < |V| else 0), for i from 1 to
-    max(|H|, |V|); Where H is the horizontal coefficient; V is the vertical
-    coefficient; sign(x) is -1 if x < 0, 0 if x = 0, or 1 if x > 0; and |x| is
-    the absolute value of x.
-
+    `(sign(H) if i < |H| else 0, sign(V) if i < |V| else 0)`, for i from 1 to
+    `max(|H|, |V|)`; Where `H` is the horizontal coefficient; `V` is the
+    vertical coefficient; `sign(x)` is -1 if `x < 0`, 0 if `x = 0`, or 1
+    otherwise; and `|x|` is the absolute value of `x`.
 
 For example, for a horizontal x vertical coefficient of (-1,2), a creature will
 have the following movement cycle:
@@ -197,13 +199,14 @@ For a mouth to exist, the empty space should have at least three cell
 neighbours (orthogonal neighbours might have at most four cell neighbours). It
 doesn't matter if the cell is a regular (green) or head (yellow) type.
 
-For example, in the following structures, we denote with an `x` the place where
+For example, in the following structures, we denote with an `*` the place where
 a mouth exists:
 
     ..... ..... ..... .......
     .o*o. .oo.. .o... .o*o*o.
     .ooo. .o*o. .ooo. .ooooo.
     ..... .ooo. .o... ..o*o..
+    ..... ..... ..... .......
 
 A creature with zero mouths (third example in the previous row) will obviously
 die pretty soon because it cannot eat food, and, because it cannot eat key
@@ -223,6 +226,16 @@ The starting ancestral are creatures with the following structure:
 They have one mouth and moving coefficients (0,-2), therefore, they move
 vertically down. All the rotations of the ancestral also exists, so the
 movements are variate, but all of them orthogonal.
+
+Just to make things clear, the following creatures are all equivalent (i.e. the
+same) (rotations and mirrors of the same structure):
+
+    ...... ...... ..... ..... ..... ..... ...... ......
+    .o.oo. .oo.o. .oo.. ..oo. ..o.. ...o. ..ooo. .ooo..
+    .ooo.. ..ooo. .o... ...o. ..oo. ..oo. .oo.o. .o.oo.
+    ...... ...... .oo.. ..oo. ...o. ..o.. ...... ......
+    ...... ...... ..o.. ..o.. ..oo. ..oo. ...... ......
+    ...... ...... ..... ..... ..... ..... ...... ......
 
 The environment is started with some of them, and some amount of free food and
 key particles scattered around the world.
