@@ -1,11 +1,11 @@
 # Biotopia
 
 Biotopia is a simple Artificial Life Simulator inspired in a program of the
-same name created by Anthony Liekens.
+same name created by Anthony Liekens (version 2.0 released in 1995).
 
-It works by letting creatures live in a simulated environment, where they must
-compete for food and reproduction. Because of that competition we can observe a
-statistics tendency of complexity increase in those creature's morphology.
+It works by letting creatures live in a simulated environment, where there's a
+competition for food and reproduction. Because of that competition we can observe a
+statistics tendency of complexity increase and adaptation.
 
 ## Command line arguments
 
@@ -64,8 +64,8 @@ statistics tendency of complexity increase in those creature's morphology.
 ## Main concepts
 
 Creatures, in this simulator, are simple beings with a multi-cellular
-structure.  The very arrangement of its cells determines both its movement
-throughout the world, as well as it's capacity of eating and reproduce.
+structure. The very arrangement of its cells determines both its movement
+throughout the world, as well as its capacity of eating and reproduce.
 
 To live, each creature looses energy, therefore, they must eat to keep up
 energy amount bigger than zero. If it ever reaches zero, the creature dies and
@@ -84,7 +84,7 @@ dots) scattered all over the place. These are:
   * key particles - dark yellow pixels. They are the only source of reproduction.
 
 Each creature is born with a limited amount of energy, and at each simulation
-cycle, this energy is decreased by an amount (default is 1). When the
+cycle, this energy is decreased by a fixed amount (default is 1). When the
 creature's energy reaches zero, it dies.
 
 In order to rise its energy level, the creature must walk over the space and
@@ -112,7 +112,8 @@ The simulation can have two behaviours regarding the limits of the world:
     horizontal wrapping are enabled, the world will have a torus topology.
   * collision - in this case, a creature, when reaching the border, will mirror
     horizontally (if reaching the width limit) or vertically (if reaching the
-    heigth limit), therefore, changing its movement.
+    heigth limit), therefore, changing its movement direction like a
+    reflection.
 
 ## Creatures
 ### Structure
@@ -129,13 +130,13 @@ into a key particle.
 The creature structure must obey certain rules, they are:
 
   * All cells must be connected to the head.
-  * There must not be cycles (i.e. starting from the head, and following
+  * There must not exists cycles (i.e. starting from the head, and following
     neighbours, one cannot reach the same cell again).
 
 By neighbours we mean only orthogonal, not diagonals.
 
-With that rules in mind, let show some concrete valid and invalid examples (in
-this examples, empty space is represented as `.`, and cells are represented as
+With these rules in mind, lets see some concrete valid and invalid examples (in
+these examples, empty space is represented as `.`, and cells are represented as
 `o`).
 
 These are all valid examples:
@@ -146,7 +147,7 @@ These are all valid examples:
     ..... .ooo. .o...
     ..... ..... .....
 
-On the other hand, the following examples are invalid, because the contain
+On the other hand, the following examples are invalid, because they contain
 cycles:
 
     ..... ..... .....
@@ -158,13 +159,15 @@ cycles:
 At each reproduction (i.e. key particle eating) the offspring will be an exact
 copy of its parent, with a change of random mutation. A mutation is either
 adding or removing a single cell in a way that does not yield an invalid
-structure.
+structure - therefore, an invalid structure can never occur.
 
 ### Movement
 
-Creatures move in the environment depending on its structure. The movement
-depends solely on what is called "flagellum". These are cells that have only on
-neighbour.
+Creatures moves in the environment depending on its structure. The movement
+depends solely on what is called "flagellum". These are cells that have only
+one neighbour. The flagellum, though, can have one of four possible
+configurations depending where the neighbour is: upward, downward, left, or
+right.
 
 For example, the following structure has three flagellum, one faced upwards,
 one faced left, and the other faced right:
@@ -174,16 +177,18 @@ one faced left, and the other faced right:
     .ooo.
     .....
 
+These flagella can be interpreted as direction pointers.
+
 Each flagellum adds to a direction coefficient. In this example, the two
 horizontal flagellum (left and right) rule out each other, thereby resulting in
 a horizontal coefficient of zero. The upward flagellum adds a unbalanced
 vertical coefficient (in this case, -1).
 
-So, by summing up the flagellum directions, we came out with horizontal and
-vertical coefficients. To sum up, we must consider that upward flagellum adds
--1 to the vertical coefficient, downwards flagellum adds 1 to the vertical
-coefficient; left flagellum adds -1 to the horizontal coefficient, and right
-flagellum adds 1 to horizontal coefficient.
+So, by summing up the flagella directions, we came out with horizontal and
+vertical coefficients. To sum up, we must consider that upward flagella adds
+-1 to the vertical coefficient, downwards flagella adds 1 to the vertical
+coefficient; left flagella adds -1 to the horizontal coefficient, and right
+flagella adds 1 to horizontal coefficient.
 
 The following examples have (0,-2), (1,-1), and (1, 0) of (horizontal,
 vertical) coefficients respectively:
@@ -195,8 +200,8 @@ vertical) coefficients respectively:
     ..... ..... .....
 
 At each cycle, a creature may walk only one pixel in each direction. The actual
-move is draw from a creature's internal cyclic movement, that have the
-following rule:
+move is draw from a creature's internal cyclic movement (i.e. it repeats), that
+have the following rule:
 
   * A creature always stands still one cycle (i.e. walk (0,0))
   * Then, at each i-th cycle, the creature will have a movement equals to
@@ -205,24 +210,24 @@ following rule:
     vertical coefficient; `sign(x)` is -1 if `x < 0`, 0 if `x = 0`, or 1
     otherwise; and `|x|` is the absolute value of `x`.
 
-For example, for a horizontal x vertical coefficient of (-1,2), a creature will
+For example, for a (horizontal, vertical) coefficient of (-1,2), a creature will
 have the following movement cycle:
 
   * (0, 0)
   * (-1, 1)
   * (0, 1)
 
-For coefficients equal to (1,1), we'll have the following cycle:
+For coefficients equals to (1,1), we'll have the following cycle:
 
   * (0, 0)
   * (1, 1)
 
-Likewise, for coefficients equal to (1,-1), we'll have the following cycle:
+Likewise, for coefficients equals to (1,-1), we'll have the following cycle:
 
   * (0, 0)
   * (1,-1)
 
-For coefficients equal to (0,10), we'll have the following cycle:
+For coefficients equals to (0,10), we'll have the following cycle:
 
   * (0, 0)
   * (0, 1)
@@ -236,12 +241,12 @@ For coefficients equal to (0,10), we'll have the following cycle:
   * (0, 1)
   * (0, 1)
 
-Note that, the bigger the coefficient, faster will be the movement of the
-creature in that dimension, because it will less often stand still. Also, for a
-creature to have perfect diagonal movement, it will have to have equal absolute
+Note that, the bigger the coefficient, the faster will be the movement of the
+creature in that dimension, because it'll less often stand still. Also, for a
+creature to have perfect diagonal movement, it must have equal absolute
 values of the horizontal and vertical coefficients. Finally, creatures that
-have the coefficients equal to (0,0) will never move (that's a bad thing,
-because it wont eat and reproduce - leading quickly to death).
+have the coefficients equals to (0,0) will never move (that's a bad thing,
+because it won't eat and reproduce - leading quickly to death).
 
 ### Eating
 
@@ -250,8 +255,9 @@ creature might have zero or more mouths. Mouth is a place in an neighbour empty
 space where the creature can consume both food and key particles.
 
 For a mouth to exist, the empty space should have at least three cell
-neighbours (orthogonal neighbours might have at most four cell neighbours). It
-doesn't matter if the cell is a regular (green) or head (yellow) type.
+neighbours (orthogonal neighbours might have at most four cell neighbours;
+therefore it must have 3 or 4 neighbours). It doesn't matter if the cell is a
+regular (green) or head (yellow) type.
 
 For example, in the following structures, we denote with an `*` the place where
 a mouth exists:
@@ -263,10 +269,10 @@ a mouth exists:
     ..... ..... ..... .......
 
 A creature with zero mouths (third example in the previous row) will obviously
-die pretty soon because it cannot eat food, and, because it cannot eat key
+die pretty soon because it cannot feed itself, and, because it cannot eat key
 particles, will never reproduce. On the other hand, creatures with more mouths
 than the average will have selective advantage because they'll more easily be
-able to eat and reproduce.
+able to feed and reproduce.
 
 ## Evolution
 
@@ -278,11 +284,18 @@ The starting ancestral are creatures with the following structure:
     .....
 
 They have one mouth and moving coefficients (0,-2), therefore, they move
-vertically down. All the rotations of the ancestral also exists, so the
-movements are variate, but all of them orthogonal.
+vertically down two of three of its movement cycle:
 
-Just to make things clear, the following creatures are all equivalent (i.e. the
-same) (rotations and mirrors of the same structure):
+  * (0, 0)
+  * (0, -1)
+  * (0, -1)
+
+All the rotations of the ancestral also exists, so the movements are variate,
+but all of them orthogonal and the same speed.
+
+Just to make clear the rotation and mirroring concepts. The following creatures
+are all equivalent (i.e. the same) (rotations and mirrors of the same
+structure):
 
     ...... ...... ..... ..... ..... ..... ...... ......
     .o.oo. .oo.o. .oo.. ..oo. ..o.. ...o. ..ooo. .ooo..
@@ -294,7 +307,7 @@ same) (rotations and mirrors of the same structure):
 The environment is started with some of them, and some amount of free food and
 key particles scattered around the world.
 
-Pretty soon, we observe that the descendants will show a tendency to increse
+Pretty soon, we observe that the descendants will show a tendency to increase
 complexity of its structure by incorporating more mouths and better movements
 strategies (i.e. faster and diagonals).
 
