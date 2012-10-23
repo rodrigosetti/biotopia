@@ -1,6 +1,20 @@
 #! /usr/bin/env python
 # coding: utf-8
 
+"""
+Biotopia is a simple Artificial Life Simulator inspired in a program of the
+same name created by Anthony Liekens.
+
+It works by letting creatures live in a simulated environment, where they must
+compete for food and reproduction. Because of that competition we can observe a
+statistical tendency of complexity increase in the population's morphology.
+
+Please see accompanied README.
+"""
+
+__author__ = "Rodrigo Setti"
+__all__ = ["Creature", "Zoo", "ancestor"]
+
 from copy import copy
 from itertools import cycle, izip_longest, repeat, chain
 from random import sample, randint, random
@@ -13,6 +27,7 @@ def neighbours(cell):
                 (cell[0]+1, cell[1])))
 
 def sign(x):
+    "Return -1 if x < 0; 0 if x == 0; and 1 otherwise"
     if x < 0:
         return -1
     elif x == 0:
@@ -21,6 +36,11 @@ def sign(x):
         return 1
 
 class Creature(object):
+    """
+    A Creature object holds the creature's structure, which is composed of a
+    set of (x,y) of its cells, relative to its head (which is (0,0)).
+    Also, some state information such as energy, age, and position.
+    """
 
     def __init__(self, position, cells, head, energy=0):
         """
@@ -127,7 +147,8 @@ class Creature(object):
 
     def analyze(self):
         """
-        Find out the movement and the mouths
+        Find out the movement and the mouths from the structure. Must be called
+        each time the structure changes.
         """
         to_visit = set([self.head])
         visited = set()
@@ -202,25 +223,35 @@ class Creature(object):
     def __repr__(self):
         return "<Creature %s, head=%s>" % (self.cells, self.head)
 
-def default_descendant(position=(0,0), energy=0):
+def ancestor(position=(0,0), energy=0):
     """
-    Return a random oriented default descendent
+    Return a random oriented default root ancestor.
     """
-    descendent = Creature(position, ((-1,1), (-1,0), (0,0), (1,0), (1,1)),
+    creature = Creature(position, ((-1,1), (-1,0), (0,0), (1,0), (1,1)),
                           head=(0,0),
                           energy=energy)
+
+    # perform a random rotation
     r = randint(1,4)
-
     if r == 1:
-        descendent.rotate_right()
+        creature.rotate_right()
     elif r == 2:
-        descendent.rotate_left()
+        creature.rotate_left()
     elif r == 3:
-        descendent.mirror_vertical()
+        creature.mirror_vertical()
 
-    return descendent
+    # let creature with a random movement cycle
+    for x in xrange(randint(0,2)):
+        next(creature.movement)
+
+    return creature
 
 class MultiSet(object):
+    """
+    Implements a multi-set. Each element can appear more than once, therefore,
+    add operations and remove operations must be called the same amount for each
+    element in order for it not be contained in set.
+    """
 
     def __init__(self, iterable = []):
         self.items = {}
@@ -234,9 +265,11 @@ class MultiSet(object):
         return sum(self.items.itervalues())
 
     def add(self, value):
+        "adds this value to the set, incrementing the value's count"
         self.items[value] = self.items.get(value, 0) + 1
 
     def remove(self, value):
+        "remove this value from the set, decrementing the value's count"
         self.items[value] = self.items.get(value, 0) - 1
         if self.items[value] == 0:
             del self.items[value]
@@ -247,6 +280,10 @@ class MultiSet(object):
                 yield value
 
     def iter_unique(self):
+        """
+        iterate over the unique values of the set, not repeating if the same
+        value occurs more than once in the set.
+        """
         for value, count in self.items.iteritems():
             if count > 0:
                 yield value
@@ -254,19 +291,23 @@ class MultiSet(object):
     def __repr__(self):
         return "<multiset %s>" % ','.join(iter(self))
 
-ENERGY_LOSS = 1
-ENERGY_GAIN = 20
-
 class Zoo(object):
+    """
+    Holds a complete simulation with a set of creatures, foods and key
+    particles.
+    """
 
     def __init__(self, descendants, size,
                  offspring_energy,
                  start_food, start_keys,
+                 energy_loss=1, energy_gain=10,
                  wrap_vertical=False, wrap_horizontal=False,
                  mutation_probability = 0.2):
         self.creatures = set(descendants)
         self.size = size
         self.offspring_energy = offspring_energy
+        self.energy_loss = energy_loss
+        self.energy_gain = energy_gain
         self.wrap_horizontal = wrap_horizontal
         self.wrap_vertical = wrap_vertical
         self.mutation_probability = mutation_probability
@@ -294,7 +335,7 @@ class Zoo(object):
         survivors = set()
 
         for creature in self.creatures:
-            creature.energy -= ENERGY_LOSS
+            creature.energy -= self.energy_loss
             creature.age += 1
 
             for mouth in creature.mouths:
@@ -307,7 +348,7 @@ class Zoo(object):
                     self.food.remove(mouth_position)
 
                     # increment creature's energy
-                    creature.energy += ENERGY_GAIN
+                    creature.energy += self.energy_gain
                 if mouth_position in self.keys:
                     # remove key particle from soup
                     self.keys.remove(mouth_position)
@@ -391,32 +432,59 @@ class Zoo(object):
 if __name__  == "__main__":
     import sys
     import pygame
-    from pygame.locals import *
+    from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, KEYDOWN
 
+    # the width and heigh of the creature's environment
     WIDTH = 800
     HEIGHT = 600
 
+    # the width and height of the population/keys chart, located right under
+    # the creature's environment. Statistics text will be displayed at the
+    # right of the chart.
     CHART_HEIGHT = 100
     CHART_WIDTH = 600
 
-    DESCENDANTS_ENERGY = 2000
+    #: the amount of energy the root ancestors starts with.
+    ANCESTORS_ENERGY = 2000
+
+    #: at each reproduction, the amount of energy the offspring starts with.
     OFFSPRING_ENERGY = 1000
 
+    #: quantity of energy lost at each creature's cycle
+    ENERGY_LOSS = 1
+
+    #: quantity of energy gain at each food eat
+    ENERGY_GAIN = 20
+
+    # the amount of food and key particles the environment starts with.
     START_FOOD = 50000
     START_KEYS = 250
+
+    #: the number of root ancestors the simulation starts with. This number,
+    #: summed up with the START_KEYS value, is the maximum population possible.
     START_POPULATION = 250
+
+    #: the change of random mutation at each reproduction.
+    MUTATION_PROBABILITY = 0.2
 
     #: the maximum amount of population or keys
     POP_MAX = START_KEYS + START_POPULATION
 
+    # convenient function to start a new simulation
+    def start_new_simulation():
+        return Zoo([ancestor(position = (randint(0,WIDTH), randint(0, HEIGHT)),
+                             energy = ANCESTORS_ENERGY) for i in
+                    xrange(START_POPULATION)],
+                   size = (WIDTH, HEIGHT),
+                   offspring_energy = OFFSPRING_ENERGY,
+                   start_food = START_FOOD,
+                   start_keys = START_KEYS,
+                   energy_loss = ENERGY_LOSS,
+                   energy_gain = ENERGY_GAIN,
+                   mutation_probability = MUTATION_PROBABILITY)
+
     # initialize simulation
-    zoo = Zoo([default_descendant(position = (randint(0,WIDTH), randint(0, HEIGHT)),
-                                  energy = DESCENDANTS_ENERGY) for i in
-               xrange(START_POPULATION)],
-              size = (WIDTH, HEIGHT),
-              offspring_energy = OFFSPRING_ENERGY,
-              start_food = START_FOOD,
-              start_keys = START_KEYS)
+    zoo = start_new_simulation()
 
     # initialize pygame stuff
     pygame.init()
@@ -439,7 +507,7 @@ if __name__  == "__main__":
 
     # fonts
     font_size = 20
-    stats_font = pygame.font.Font(None, 20)
+    stats_font = pygame.font.SysFont("monospace", 12)
 
     # flags and control variables
     zooming = False
@@ -538,23 +606,32 @@ if __name__  == "__main__":
 
             # print some statistics: average age, average mouths, average energy
             if total_creatures > 0:
+                min_age = min(c.age for c in zoo.creatures)
+                max_age = max(c.age for c in zoo.creatures)
                 average_age = sum(c.age for c in zoo.creatures) / float(total_creatures)
-                average_mouths = sum(len(c.mouths) for c in zoo.creatures) / float(total_creatures)
+
+                creature_mouths = [len(c.mouths) for c in zoo.creatures]
+                min_mouths = min(creature_mouths)
+                max_mouths = max(creature_mouths)
+                average_mouths = sum(creature_mouths) / float(total_creatures)
+
+                min_energy = min(c.energy for c in zoo.creatures)
+                max_energy = min(c.energy for c in zoo.creatures)
                 average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
             else:
-                average_age = 0
-                average_mouths = 0
-                average_energy = 0
+                average_age = max_age = min_age = 0
+                average_mouths = max_mouths = min_mouths = 0
+                average_energy = max_energy = min_energy = 0
 
-            text_age = stats_font.render("avr age: %.2f" % average_age,
+            text_age = stats_font.render("age: %04d %04.2f %04d" % (min_age, average_age, max_age),
                                          False, text_color, background_color)
-            text_mouths = stats_font.render("avr mouths: %.2f" % average_mouths,
+            text_mouths = stats_font.render("mouths: %04d %04.2f %04d" % (min_mouths, average_mouths, max_mouths),
                                             False, text_color, background_color)
-            text_energy = stats_font.render("avr energy: %.2f" % average_energy,
+            text_energy = stats_font.render("energy: %04d %04.2f %04d" % (min_energy, average_energy, max_energy),
                                             False, text_color, background_color)
-            text_pop    = stats_font.render("pop/keys: %d/%d" % (total_creatures, total_keys),
+            text_pop    = stats_font.render("pop/keys: %04d/%04d" % (total_creatures, total_keys),
                                             False, text_color, background_color)
-            text_cycle  = stats_font.render("cycle: %d" % cycle_count,
+            text_cycle  = stats_font.render("cycle: %08d" % cycle_count,
                                             False, text_color, background_color)
 
             pygame.draw.rect(window, background_color, ((CHART_WIDTH+1, HEIGHT+1),
@@ -582,7 +659,13 @@ if __name__  == "__main__":
             elif event.type == MOUSEBUTTONUP:
                 zooming = False
             elif event.type == KEYDOWN and event.key == K_SPACE:
+                # toggle pausing
                 paused = not paused
+            elif event.type == KEYDOWN and event.key == K_r:
+                # start new simulation!
+                window.fill(background_color)
+                zoo = start_new_simulation()
+                cycle_count = 0
 
         # get mouse position
         mouse_pos = pygame.mouse.get_pos()
