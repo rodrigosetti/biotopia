@@ -61,7 +61,7 @@ The simulation can have two behaviours regarding the limits of the world:
     heigth limit), therefore, changing its movement.
 
 ## Creatures
-### Creatures
+### Structure
 
 Creature behaviour is governed by its structure. A creature structure can be
 represented by a set of connected dots (called cells, green pixels). One of
