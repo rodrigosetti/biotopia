@@ -17,7 +17,7 @@ __all__ = ["Creature", "Zoo", "ancestor"]
 
 from copy import copy
 from itertools import cycle, izip_longest, repeat, chain
-from random import sample, randint, random
+from random import sample, randint, random, choice
 
 def neighbours(cell):
     "return the orthogonal neighbours"
@@ -526,8 +526,13 @@ if __name__  == "__main__":
     zooming = False
     debugging = False
     paused = False
-    nearest = None
     cycle_count = 0
+
+    # debugging references
+    nearest = None
+    most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
+    most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
+    oldest = choice(list(zoo.creatures)) if zoo.creatures else None
 
     # main loop
     while True:
@@ -546,7 +551,10 @@ if __name__  == "__main__":
         # print each creature
         for creature in zoo.creatures:
 
-            if debugging and creature is nearest:
+            if debugging and (creature is nearest or
+                              creature is oldest or
+                              creature is most_mouths or
+                              creature is most_energetic):
                 color = (255,255,255)
             elif creature.age <= 0:
                 color = new_born_color
@@ -599,17 +607,50 @@ if __name__  == "__main__":
         # print the nearest creature's information, if debugging:
         if debugging and total_creatures > 0:
             # find out nearest creature energy and age
-            nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
-            energy_text = stats_font.render("e: %d" % nearest.energy, False, text_color)
-            age_text =    stats_font.render("a: %d" % nearest.age, False, text_color)
-            status_width = max(energy_text.get_width(), age_text.get_width())
-            status_height = font_size + age_text.get_height()
+            if mouse_pos[1] < height:
+                nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
+                energy_text = stats_font.render("e: %d" % nearest.energy, False, text_color)
+                age_text =    stats_font.render("a: %d" % nearest.age, False, text_color)
+                status_width = max(energy_text.get_width(), age_text.get_width())
+                status_height = font_size + age_text.get_height()
+
+                # print information alongside the creature
+                blit_pos = (nearest.position[0] + 10 if nearest.position[0] + 10 + status_width < width else nearest.position[0] - 10 - status_width,
+                            nearest.position[1] + 10 if nearest.position[1] + 10 + status_height < height else nearest.position[1] - 10 - status_height)
+                window.blit(energy_text, blit_pos)
+                window.blit(age_text, (blit_pos[0], blit_pos[1] + font_size))
+            else:
+                nearest = None
+
+            # find oldest and identify
+            creature = max(zoo.creatures, key=lambda c: c.age)
+            oldest = creature if oldest is None or oldest.age < creature.age else oldest
+            text = stats_font.render('oldest (%d)' % oldest.age, False, text_color)
 
             # print information alongside the creature
-            blit_pos = (nearest.position[0] + 10 if nearest.position[0] + 10 + status_width < width else nearest.position[0] - 10 - status_width,
-                        nearest.position[1] + 10 if nearest.position[1] + 10 + status_height < height else nearest.position[1] - 10 - status_height)
-            window.blit(energy_text, blit_pos)
-            window.blit(age_text, (blit_pos[0], blit_pos[1] + font_size))
+            blit_pos = (oldest.position[0] + 10 if oldest.position[0] + 10 + text.get_width() < width else oldest.position[0] - 10 - text.get_width(),
+                        oldest.position[1] - text.get_height() / 2)
+            window.blit(text, blit_pos)
+
+            # find most energetic and identify
+            creature = max(zoo.creatures, key=lambda c: c.energy)
+            most_energetic = creature if most_energetic is None or most_energetic.energy < creature.energy else most_energetic
+            text = stats_font.render('most energetic (%d)' % most_energetic.energy, False, text_color)
+
+            # print information alongside the creature
+            blit_pos = (most_energetic.position[0] - text.get_width() / 2,
+                        most_energetic.position[1] - 10 - text.get_height() if most_energetic.position[1] - 10 - text.get_height() > 0 else most_energetic.position[1] + 10)
+            window.blit(text, blit_pos)
+
+            # find most mouth and identify
+            creature = max(zoo.creatures, key=lambda c: len(c.mouths))
+            most_mouths = creature if most_mouths is None or len(most_mouths.mouths) < len(creature.mouths) else most_mouths
+            text = stats_font.render('most mouths (%d)' % len(most_mouths.mouths), False, text_color)
+
+            # print information alongside the creature
+            blit_pos = (most_mouths.position[0] - 10 - text.get_width() if most_mouths.position[0] - 10 - text.get_width() > 0 else most_mouths.position[0] + 10,
+                        most_mouths.position[1] - text.get_height() / 2)
+            window.blit(text, blit_pos)
 
         # update screen and fps
         pygame.display.update()
@@ -648,7 +689,7 @@ if __name__  == "__main__":
                 average_mouths = sum(creature_mouths) / float(total_creatures)
 
                 min_energy = min(c.energy for c in zoo.creatures)
-                max_energy = min(c.energy for c in zoo.creatures)
+                max_energy = max(c.energy for c in zoo.creatures)
                 average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
             else:
                 average_age = max_age = min_age = 0
@@ -701,6 +742,11 @@ if __name__  == "__main__":
                 window.fill(background_color)
                 zoo = start_new_simulation()
                 cycle_count = 0
+                # restart debugging references
+                nearest = None
+                most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
+                most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
+                oldest = choice(list(zoo.creatures)) if zoo.creatures else None
 
         # get mouse position
         mouse_pos = pygame.mouse.get_pos()
