@@ -467,6 +467,8 @@ if __name__  == "__main__":
                         dest='wrap_vertically', help="Whether or not to wrap the environment vertically")
     parser.add_argument('--wrap-horizontally', '-wh', default=False, action='store_true',
                         dest='wrap_horizontally', help="Whether or not to wrap the environment horizontally")
+    parser.add_argument('--auto-restart', '-r', default=False, action='store_true',
+                        dest='auto_restart', help="Whether or not to restart simulation if population reaches zero")
     args = parser.parse_args()
 
     #: the maximum amount of population or keys
@@ -474,6 +476,7 @@ if __name__  == "__main__":
     width = args.width
     height = args.height
     chart_update = args.chart_update
+    auto_restart = args.auto_restart
 
     # the width and height of the population/keys chart, located right under
     # the creature's environment. Statistics text will be displayed at the
@@ -606,6 +609,16 @@ if __name__  == "__main__":
 
         # print the nearest creature's information, if debugging:
         if debugging and total_creatures > 0:
+            # clear references, if creatures are dead
+            if nearest not in zoo.creatures:
+                nearest = None
+            if oldest not in zoo.creatures:
+                oldest = None
+            if most_energetic not in zoo.creatures:
+                most_energetic = None
+            if most_mouths not in zoo.creatures:
+                most_mouths = None
+
             # find out nearest creature energy and age
             if 0 <= mouse_pos[0] <= width and 0 <= mouse_pos[1] <= height:
                 nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
@@ -621,14 +634,6 @@ if __name__  == "__main__":
                 window.blit(age_text, (blit_pos[0], blit_pos[1] + font_size))
             else:
                 nearest = None
-
-            # clear references, if creatures are dead
-            if oldest not in zoo.creatures:
-                oldest = None
-            if most_energetic not in zoo.creatures:
-                most_energetic = None
-            if most_mouths not in zoo.creatures:
-                most_mouths = None
 
             # find oldest and identify
             creature = max(zoo.creatures, key=lambda c: c.age)
@@ -730,6 +735,12 @@ if __name__  == "__main__":
             # increment cycle_count
             cycle_count += 1
 
+            # if population is zero and auto_restart is True: restart simulation
+            if total_creatures <= 0 and auto_restart:
+                window.fill(background_color)
+                zoo = start_new_simulation()
+                cycle_count = 0
+
         # handle events
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -757,11 +768,6 @@ if __name__  == "__main__":
                     window.fill(background_color)
                     zoo = start_new_simulation()
                     cycle_count = 0
-                    # restart debugging references
-                    nearest = None
-                    most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
-                    most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
-                    oldest = choice(list(zoo.creatures)) if zoo.creatures else None
 
         # get mouse position
         mouse_pos = pygame.mouse.get_pos()

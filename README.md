@@ -15,7 +15,7 @@ statistics tendency of complexity increase and adaptation.
                        [--start-food AMOUNT] [--start-keys AMOUNT]
                        [--start-population AMOUNT]
                        [--mutation-probability PROPORTION] [--chart-update CYCLES]
-                       [--wrap-vertically] [--wrap-horizontally]
+                       [--wrap-vertically] [--wrap-horizontally] [--auto-restart]
 
     Biotopia - The Artificial Life Simulator
 
@@ -50,6 +50,8 @@ statistics tendency of complexity increase and adaptation.
                             Whether or not to wrap the environment vertically
       --wrap-horizontally, -wh
                             Whether or not to wrap the environment horizontally
+      --auto-restart, -r    Whether or not to restart simulation if population
+                            reaches zero
 
 ## In simulation commands
 
