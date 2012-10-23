@@ -453,7 +453,8 @@ if __name__  == "__main__":
 
         # print each food particle
         for food in zoo.food.iter_unique():
-            window.set_at(food, food_color)
+            if 0 <= food[0] <= WIDTH and 0 <= food[1] <= HEIGHT:
+                window.set_at(food, food_color)
 
         # print each key particle
         for key in zoo.keys.iter_unique():
