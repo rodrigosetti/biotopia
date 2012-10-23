@@ -457,12 +457,15 @@ if __name__  == "__main__":
                         dest='start_population', help="The number of ancestors the simulation starts with")
     parser.add_argument('--mutation-probability', '-m', default=0.2, type=float, metavar='PROPORTION',
                         dest='mutation_probability', help="The chance of random mutation at each reproduction")
+    parser.add_argument('--chart-update', '-c', default=10, type=int, metavar='CYCLES',
+                        dest='chart_update', help="Update the population/keys chart period")
     args = parser.parse_args()
 
     #: the maximum amount of population or keys
     POP_MAX = args.start_keys + args.start_population
     width = args.width
     height = args.height
+    chart_update = args.chart_update
 
     # the width and height of the population/keys chart, located right under
     # the creature's environment. Statistics text will be displayed at the
@@ -581,28 +584,28 @@ if __name__  == "__main__":
 
         # do stuff if not paused
         if not paused:
-
-            # draw chart:
-            # first, move chart left
-            chart = window.subsurface(((1,height+1),
-                                       (chart_width-1, chart_height-1))).copy()
-            window.blit(chart, (0, height+1))
-
             # do some math
             total_creatures = len(zoo.creatures)
             total_keys = len(zoo.keys)
 
-            # then, print chart pixels
-            pygame.draw.line(window, key_color,
-                             (chart_width-1, height),
-                             (chart_width-1,
-                              height + (total_keys * chart_height /  POP_MAX)))
-            pygame.draw.line(window, head_color,
-                             (chart_width-1, height + chart_height),
-                             (chart_width-1,
-                              height+chart_height - (total_creatures * chart_height /  POP_MAX)))
-            window.set_at((chart_width-1, height + chart_height/2),
-                          background_color)
+            # draw chart:
+            if cycle_count % chart_update == 0:
+                # first, move chart left
+                chart = window.subsurface(((1,height+1),
+                                           (chart_width-1, chart_height-1))).copy()
+                window.blit(chart, (0, height+1))
+
+                # then, print chart pixels
+                pygame.draw.line(window, key_color,
+                                 (chart_width-1, height),
+                                 (chart_width-1,
+                                  height + (total_keys * chart_height /  POP_MAX)))
+                pygame.draw.line(window, head_color,
+                                 (chart_width-1, height + chart_height),
+                                 (chart_width-1,
+                                  height+chart_height - (total_creatures * chart_height /  POP_MAX)))
+                window.set_at((chart_width-1, height + chart_height/2),
+                              background_color)
 
             # print some statistics: average age, average mouths, average energy
             if total_creatures > 0:

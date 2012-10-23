@@ -14,7 +14,7 @@ statistics tendency of complexity increase in those creature's morphology.
                        [--energy-loss ENERGY] [--energy-gain ENERGY]
                        [--start-food AMOUNT] [--start-keys AMOUNT]
                        [--start-population AMOUNT]
-                       [--mutation-probability PROPORTION]
+                       [--mutation-probability PROPORTION] [--chart-update CYCLES]
 
     Biotopia - The Artificial Life Simulator
 
@@ -43,6 +43,8 @@ statistics tendency of complexity increase in those creature's morphology.
                             The number of ancestors the simulation starts with
       --mutation-probability PROPORTION, -m PROPORTION
                             The chance of random mutation at each reproduction
+      --chart-update CYCLES, -c CYCLES
+                            Update the population/keys chart period
 
 ## Main concepts
 
