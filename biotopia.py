@@ -536,9 +536,15 @@ if __name__  == "__main__":
                           background_color)
 
             # print some statistics: average age, average mouths, average energy
-            average_age = sum(c.age for c in zoo.creatures) / float(len(zoo.creatures))
-            average_mouths = sum(len(c.mouths) for c in zoo.creatures) / float(len(zoo.creatures))
-            average_energy = sum(c.energy for c in zoo.creatures) / float(len(zoo.creatures))
+            if total_creatures > 0:
+                average_age = sum(c.age for c in zoo.creatures) / float(total_creatures)
+                average_mouths = sum(len(c.mouths) for c in zoo.creatures) / float(total_creatures)
+                average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
+            else:
+                average_age = 0
+                average_mouths = 0
+                average_energy = 0
+
             text_age = stats_font.render("avr age: %.2f" % average_age,
                                          False, text_color, background_color)
             text_mouths = stats_font.render("avr mouths: %.2f" % average_mouths,
