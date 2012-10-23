@@ -35,6 +35,10 @@ def sign(x):
     else:
         return 1
 
+def distance(a, b):
+    "Calculates the squared distance of two bi-dimensional points"
+    return (a[0]-b[0])**2 + (a[1]-b[1])**2
+
 class Creature(object):
     """
     A Creature object holds the creature's structure, which is composed of a
@@ -432,7 +436,7 @@ class Zoo(object):
 if __name__  == "__main__":
     import sys
     import pygame
-    from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, KEYDOWN
+    from pygame.locals import MOUSEBUTTONDOWN, MOUSEBUTTONUP, QUIT, K_SPACE, K_r, K_d, KEYDOWN
     import argparse
 
     # parse arguments, possibly replacing default values
@@ -520,7 +524,9 @@ if __name__  == "__main__":
 
     # flags and control variables
     zooming = False
+    debugging = False
     paused = False
+    nearest = None
     cycle_count = 0
 
     # main loop
@@ -540,7 +546,9 @@ if __name__  == "__main__":
         # print each creature
         for creature in zoo.creatures:
 
-            if creature.age <= 0:
+            if debugging and creature is nearest:
+                color = (255,255,255)
+            elif creature.age <= 0:
                 color = new_born_color
             elif creature.energy <= 0:
                 color = die_color
@@ -569,6 +577,10 @@ if __name__  == "__main__":
                                creature.position[1] + creature.head[1]),
                               head_color)
 
+        # do some math
+        total_creatures = len(zoo.creatures)
+        total_keys = len(zoo.keys)
+
         # draw zoom, if active
         if zooming:
             sample_point = (min(max(mouse_pos[0] - width/32, 0), width - width/16),
@@ -584,16 +596,27 @@ if __name__  == "__main__":
             pygame.draw.rect(window, zoom_border_color,
                              (blit_point, (width/4, height/4)), 1)
 
+        # print the nearest creature's information, if debugging:
+        if debugging and total_creatures > 0:
+            # find out nearest creature energy and age
+            nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
+            energy_text = stats_font.render("e: %d" % nearest.energy, False, text_color)
+            age_text =    stats_font.render("a: %d" % nearest.age, False, text_color)
+            status_width = max(energy_text.get_width(), age_text.get_width())
+            status_height = font_size + age_text.get_height()
+
+            # print information alongside the creature
+            blit_pos = (nearest.position[0] + 10 if nearest.position[0] + 10 + status_width < width else nearest.position[0] - 10 - status_width,
+                        nearest.position[1] + 10 if nearest.position[1] + 10 + status_height < height else nearest.position[1] - 10 - status_height)
+            window.blit(energy_text, blit_pos)
+            window.blit(age_text, (blit_pos[0], blit_pos[1] + font_size))
+
         # update screen and fps
         pygame.display.update()
         fps_clock.tick(60)
 
         # do stuff if not paused
         if not paused:
-            # do some math
-            total_creatures = len(zoo.creatures)
-            total_keys = len(zoo.keys)
-
             # draw chart:
             if cycle_count % chart_update == 0:
                 # first, move chart left
@@ -670,6 +693,9 @@ if __name__  == "__main__":
             elif event.type == KEYDOWN and event.key == K_SPACE:
                 # toggle pausing
                 paused = not paused
+            elif event.type == KEYDOWN and event.key == K_d:
+                # toggle debugging
+                debugging = not debugging
             elif event.type == KEYDOWN and event.key == K_r:
                 # start new simulation!
                 window.fill(background_color)

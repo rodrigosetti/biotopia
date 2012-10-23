@@ -51,6 +51,13 @@ statistics tendency of complexity increase in those creature's morphology.
       --wrap-horizontally, -wh
                             Whether or not to wrap the environment horizontally
 
+## In simulation commands
+
+  * Click over the environment: zoom area.
+  * `space`: toggle pause simulation.
+  * `r`: start new simulation.
+  * `d`: toggle debug mode (show nearest creature energy and age).
+
 ## Main concepts
 
 Creatures, in this simulator, are simple beings with a multi-cellular
