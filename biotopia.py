@@ -233,8 +233,8 @@ def ancestor(position=(0,0), energy=0):
     Return a random oriented default root ancestor.
     """
     creature = Creature(position, ((-1,1), (-1,0), (0,0), (1,0), (1,1)),
-                          head=(0,0),
-                          energy=energy)
+                        head=(0,0),
+                        energy=energy)
 
     # perform a random rotation
     r = randint(1,4)
@@ -333,6 +333,11 @@ class Zoo(object):
                     self.keys.add(new_key)
                     break
 
+        self.new_food_callback = None
+        self.del_food_callback = None
+        self.new_key_callback = None
+        self.del_key_callback = None
+
     def step(self):
         """
         Perform one step of the simulation.
@@ -351,12 +356,16 @@ class Zoo(object):
                 if mouth_position in self.food:
                     # remove food particle from soup
                     self.food.remove(mouth_position)
+                    if self.del_food_callback:
+                        self.del_food_callback(mouth_position)
 
                     # increment creature's energy
                     creature.energy += self.energy_gain
                 if mouth_position in self.keys:
                     # remove key particle from soup
                     self.keys.remove(mouth_position)
+                    if self.del_key_callback:
+                        self.del_key_callback(mouth_position)
 
                     # create a copy of current creature with start energy
                     new_creature = Creature(mouth_position,
@@ -424,12 +433,16 @@ class Zoo(object):
                 # dying creature, will not go to the next step, and will leave
                 # a trace of food for each of its cells and head as key
                 for cell in creature.cells:
+                    absolute_pos = (creature.position[0] + cell[0],
+                                    creature.position[1] + cell[1])
                     if cell == creature.head:
-                        self.keys.add((creature.position[0] + cell[0],
-                                       creature.position[1] + cell[1]))
+                        self.keys.add(absolute_pos)
+                        if self.new_key_callback:
+                            self.new_key_callback(absolute_pos)
                     else:
-                        self.food.add((creature.position[0] + cell[0],
-                                       creature.position[1] + cell[1]))
+                        self.food.add(absolute_pos)
+                        if self.new_food_callback:
+                            self.new_food_callback(absolute_pos)
             else:
                 survivors.add(creature)
 
@@ -486,24 +499,6 @@ if __name__  == "__main__":
     chart_height = 100
     chart_width = width - 200
 
-    # convenient function to start a new simulation
-    def start_new_simulation():
-        return Zoo([ancestor(position = (randint(0,width), randint(0, height)),
-                             energy = args.ancestors_energy) for i in
-                    xrange(args.start_population)],
-                   size = (width, height),
-                   offspring_energy = args.offspring_energy,
-                   start_food = args.start_food,
-                   start_keys = args.start_keys,
-                   energy_loss = args.energy_loss,
-                   energy_gain = args.energy_gain,
-                   wrap_horizontal = args.wrap_horizontally,
-                   wrap_vertical = args.wrap_vertically,
-                   mutation_probability = args.mutation_probability)
-
-    # initialize simulation
-    zoo = start_new_simulation()
-
     # initialize pygame stuff
     pygame.init()
     fps_clock = pygame.time.Clock()
@@ -527,6 +522,46 @@ if __name__  == "__main__":
     font_size = 20
     stats_font = pygame.font.SysFont("monospace", 12)
 
+    # soup surface
+    soup_surface = pygame.Surface((width, height+1))
+
+    # convenient function to start a new simulation
+    def start_new_simulation():
+        zoo = Zoo([ancestor(position = (randint(0,width), randint(0, height)),
+                            energy = args.ancestors_energy) for i in
+                   xrange(args.start_population)],
+                  size = (width, height),
+                  offspring_energy = args.offspring_energy,
+                  start_food = args.start_food,
+                  start_keys = args.start_keys,
+                  energy_loss = args.energy_loss,
+                  energy_gain = args.energy_gain,
+                  wrap_horizontal = args.wrap_horizontally,
+                  wrap_vertical = args.wrap_vertically,
+                  mutation_probability = args.mutation_probability)
+
+        # clear soup surface
+        soup_surface.fill(background_color)
+
+        # print each initial food particle
+        for food in zoo.food.iter_unique():
+            if 0 <= food[0] <= width and 0 <= food[1] <= height:
+                soup_surface.set_at(food, food_color)
+
+        # print each initial key particle
+        for key in zoo.keys.iter_unique():
+            soup_surface.set_at(key, key_color)
+
+        # set callbacks for adding or removing food and key particles
+        zoo.new_food_callback = lambda p: soup_surface.set_at(p, food_color)
+        zoo.new_key_callback = lambda p: soup_surface.set_at(p, key_color)
+        zoo.del_key_callback = zoo.del_food_callback = lambda p: soup_surface.set_at(p, background_color)
+
+        return zoo
+
+    # initialize simulation
+    zoo = start_new_simulation()
+
     # flags and control variables
     zooming = False
     debugging = False
@@ -543,16 +578,7 @@ if __name__  == "__main__":
     # main loop
     while True:
         # clear zoo screen
-        pygame.draw.rect(window, background_color, ((0,0),(width,height+1)))
-
-        # print each food particle
-        for food in zoo.food.iter_unique():
-            if 0 <= food[0] <= width and 0 <= food[1] <= height:
-                window.set_at(food, food_color)
-
-        # print each key particle
-        for key in zoo.keys.iter_unique():
-            window.set_at(key, key_color)
+        window.blit(soup_surface, (0,0))
 
         # print each creature
         for creature in zoo.creatures:
@@ -575,22 +601,8 @@ if __name__  == "__main__":
                 cell_position = (creature.position[0] + cell[0],
                                  creature.position[1] + cell[1])
                 if 0 <= cell_position[0] <= width and 0 <= cell_position[1] <= height:
-                    window.set_at(cell_position, color)
-
-            # print mouths and head only if not dieing or not new born
-            if creature.energy > 0 and creature.age > 0:
-                # print each creature mouth
-                for mouth in creature.mouths:
-                    mouth_position = (creature.position[0] + mouth[0],
-                                   creature.position[1] + mouth[1])
-                    if 0 <= mouth_position[0] <= width and 0 <= mouth_position[1] <= height:
-                        window.set_at(mouth_position,
-                                      eating_color if mouth_position in zoo.food else mouth_color)
-
-                # print creature's head
-                window.set_at((creature.position[0] + creature.head[0],
-                               creature.position[1] + creature.head[1]),
-                              head_color)
+                    window.set_at(cell_position,
+                                  head_color if cell == creature.head else color)
 
         # do some math
         total_creatures = len(zoo.creatures)
@@ -719,56 +731,56 @@ if __name__  == "__main__":
                 window.set_at((chart_width-1, height + chart_height/2),
                               background_color)
 
-            # print some statistics: average age, average mouths, average energy
-            if total_creatures > 0:
-                min_age = min(c.age for c in zoo.creatures)
-                max_age = max(c.age for c in zoo.creatures)
-                average_age = sum(c.age for c in zoo.creatures) / float(total_creatures)
+                # print some statistics: average age, average mouths, average energy
+                if total_creatures > 0:
+                    min_age = min(c.age for c in zoo.creatures)
+                    max_age = max(c.age for c in zoo.creatures)
+                    average_age = sum(c.age for c in zoo.creatures) / float(total_creatures)
 
-                creature_mouths = [len(c.mouths) for c in zoo.creatures]
-                min_mouths = min(creature_mouths)
-                max_mouths = max(creature_mouths)
-                average_mouths = sum(creature_mouths) / float(total_creatures)
+                    creature_mouths = [len(c.mouths) for c in zoo.creatures]
+                    min_mouths = min(creature_mouths)
+                    max_mouths = max(creature_mouths)
+                    average_mouths = sum(creature_mouths) / float(total_creatures)
 
-                min_energy = min(c.energy for c in zoo.creatures)
-                max_energy = max(c.energy for c in zoo.creatures)
-                average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
+                    min_energy = min(c.energy for c in zoo.creatures)
+                    max_energy = max(c.energy for c in zoo.creatures)
+                    average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
 
-                min_gen = min(c.generation for c in zoo.creatures)
-                max_gen = max(c.generation for c in zoo.creatures)
-                average_gen = sum(c.generation for c in zoo.creatures) / float(total_creatures)
-            else:
-                average_age = max_age = min_age = 0
-                average_mouths = max_mouths = min_mouths = 0
-                average_energy = max_energy = min_energy = 0
-                average_gen = max_gen = min_gen = 0
+                    min_gen = min(c.generation for c in zoo.creatures)
+                    max_gen = max(c.generation for c in zoo.creatures)
+                    average_gen = sum(c.generation for c in zoo.creatures) / float(total_creatures)
+                else:
+                    average_age = max_age = min_age = 0
+                    average_mouths = max_mouths = min_mouths = 0
+                    average_energy = max_energy = min_energy = 0
+                    average_gen = max_gen = min_gen = 0
 
-            text_age = stats_font.render("age: %04d %04.2f %04d" % (min_age, average_age, max_age),
-                                         False, text_color, background_color)
-            text_mouths = stats_font.render("mouths: %04d %04.2f %04d" % (min_mouths, average_mouths, max_mouths),
-                                            False, text_color, background_color)
-            text_energy = stats_font.render("energy: %04d %04.2f %04d" % (min_energy, average_energy, max_energy),
-                                            False, text_color, background_color)
-            text_gen    = stats_font.render("gen: %04d %04.2f %04d" % (min_gen, average_gen, max_gen),
-                                            False, text_color, background_color)
-            text_pop    = stats_font.render("pop/keys: %04d/%04d" % (total_creatures, total_keys),
-                                            False, text_color, background_color)
-            text_cycle  = stats_font.render("cycle: %08d" % cycle_count,
-                                            False, text_color, background_color)
-            text_height = max(text_age.get_height(), text_mouths.get_height(),
-                              text_energy.get_height(), text_energy.get_height(),
-                              text_gen.get_height(), text_pop.get_height(),
-                              text_cycle.get_height())
+                text_age = stats_font.render("age: %04d %04.2f %04d" % (min_age, average_age, max_age),
+                                             False, text_color, background_color)
+                text_mouths = stats_font.render("mouths: %04d %04.2f %04d" % (min_mouths, average_mouths, max_mouths),
+                                                False, text_color, background_color)
+                text_energy = stats_font.render("energy: %04d %04.2f %04d" % (min_energy, average_energy, max_energy),
+                                                False, text_color, background_color)
+                text_gen    = stats_font.render("gen: %04d %04.2f %04d" % (min_gen, average_gen, max_gen),
+                                                False, text_color, background_color)
+                text_pop    = stats_font.render("pop/keys: %04d/%04d" % (total_creatures, total_keys),
+                                                False, text_color, background_color)
+                text_cycle  = stats_font.render("cycle: %012d" % cycle_count,
+                                                False, text_color, background_color)
+                text_height = max(text_age.get_height(), text_mouths.get_height(),
+                                  text_energy.get_height(), text_energy.get_height(),
+                                  text_gen.get_height(), text_pop.get_height(),
+                                  text_cycle.get_height())
 
-            pygame.draw.rect(window, background_color, ((chart_width+1, height+1),
-                                                        (width - chart_width,
-                                                         chart_height)))
-            window.blit(text_age,    (chart_width+10, height + 10))
-            window.blit(text_mouths, (chart_width+10, height + 1*text_height + 10))
-            window.blit(text_energy, (chart_width+10, height + 2*text_height + 10))
-            window.blit(text_gen,    (chart_width+10, height + 3*text_height + 10))
-            window.blit(text_pop,    (chart_width+10, height + 4*text_height + 10))
-            window.blit(text_cycle,  (chart_width+10, height + 5*text_height + 10))
+                pygame.draw.rect(window, background_color, ((chart_width+1, height+1),
+                                                            (width - chart_width,
+                                                             chart_height)))
+                window.blit(text_age,    (chart_width+10, height + 10))
+                window.blit(text_mouths, (chart_width+10, height + 1*text_height + 10))
+                window.blit(text_energy, (chart_width+10, height + 2*text_height + 10))
+                window.blit(text_gen,    (chart_width+10, height + 3*text_height + 10))
+                window.blit(text_pop,    (chart_width+10, height + 4*text_height + 10))
+                window.blit(text_cycle,  (chart_width+10, height + 5*text_height + 10))
 
             # update simulation
             zoo.step()
