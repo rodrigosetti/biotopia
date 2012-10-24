@@ -46,7 +46,7 @@ class Creature(object):
     Also, some state information such as energy, age, and position.
     """
 
-    def __init__(self, position, cells, head, energy=0):
+    def __init__(self, position, cells, head, generation=1, energy=0):
         """
         Create a new creature from structure. "cells" is a set of (x,y) tuples
         representing positions of the cells. "head" is a position, contained in
@@ -55,6 +55,7 @@ class Creature(object):
         self.position = position
         self.cells = set(cells)
         self.head = head
+        self.generation = generation
         self.energy = energy
         self.age = 0
 
@@ -361,6 +362,7 @@ class Zoo(object):
                     new_creature = Creature(mouth_position,
                                             copy(creature.cells),
                                             creature.head,
+                                            generation = creature.generation + 1,
                                             energy = self.offspring_energy)
 
                     # mutate with probability
@@ -536,6 +538,7 @@ if __name__  == "__main__":
     most_energetic = choice(list(zoo.creatures)) if zoo.creatures else None
     most_mouths = choice(list(zoo.creatures)) if zoo.creatures else None
     oldest = choice(list(zoo.creatures)) if zoo.creatures else None
+    oldest_generation = choice(list(zoo.creatures)) if zoo.creatures else None
 
     # main loop
     while True:
@@ -556,6 +559,7 @@ if __name__  == "__main__":
 
             if debugging and (creature is nearest or
                               creature is oldest or
+                              creature is oldest_generation or
                               creature is most_mouths or
                               creature is most_energetic):
                 color = (255,255,255)
@@ -614,6 +618,8 @@ if __name__  == "__main__":
                 nearest = None
             if oldest not in zoo.creatures:
                 oldest = None
+            if oldest_generation not in zoo.creatures:
+                oldest_generation = None
             if most_energetic not in zoo.creatures:
                 most_energetic = None
             if most_mouths not in zoo.creatures:
@@ -624,21 +630,24 @@ if __name__  == "__main__":
                 nearest = min(zoo.creatures, key=lambda c: distance(c.position, mouse_pos))
                 energy_text = stats_font.render("e: %d" % nearest.energy, False, text_color)
                 age_text =    stats_font.render("a: %d" % nearest.age, False, text_color)
+                gen_text =    stats_font.render("g: %d" % nearest.generation, False, text_color)
+
                 status_width = max(energy_text.get_width(), age_text.get_width())
-                status_height = font_size + age_text.get_height()
+                status_height = energy_text.get_height() + age_text.get_height() + gen_text.get_height()
 
                 # print information alongside the creature
                 blit_pos = (nearest.position[0] + 10 if nearest.position[0] + 10 + status_width < width else nearest.position[0] - 10 - status_width,
                             nearest.position[1] + 10 if nearest.position[1] + 10 + status_height < height else nearest.position[1] - 10 - status_height)
                 window.blit(energy_text, blit_pos)
-                window.blit(age_text, (blit_pos[0], blit_pos[1] + font_size))
+                window.blit(age_text, (blit_pos[0], blit_pos[1] + energy_text.get_height()))
+                window.blit(gen_text, (blit_pos[0], blit_pos[1] + energy_text.get_height() + age_text.get_height()))
             else:
                 nearest = None
 
             # find oldest and identify
             creature = max(zoo.creatures, key=lambda c: c.age)
             oldest = creature if oldest is None or oldest.age < creature.age else oldest
-            text = stats_font.render('oldest (%d)' % oldest.age, False, text_color)
+            text = stats_font.render('oldest age (%d)' % oldest.age, False, text_color)
 
             # print information alongside the creature
             blit_pos = (oldest.position[0] + 10 if oldest.position[0] + 10 + text.get_width() < width else oldest.position[0] - 10 - text.get_width(),
@@ -663,6 +672,26 @@ if __name__  == "__main__":
             # print information alongside the creature
             blit_pos = (most_mouths.position[0] - 10 - text.get_width() if most_mouths.position[0] - 10 - text.get_width() > 0 else most_mouths.position[0] + 10,
                         most_mouths.position[1] - text.get_height() / 2)
+            window.blit(text, blit_pos)
+
+            # find most mouth and identify
+            creature = max(zoo.creatures, key=lambda c: len(c.mouths))
+            most_mouths = creature if most_mouths is None or len(most_mouths.mouths) < len(creature.mouths) else most_mouths
+            text = stats_font.render('most mouths (%d)' % len(most_mouths.mouths), False, text_color)
+
+            # print information alongside the creature
+            blit_pos = (most_mouths.position[0] - 10 - text.get_width() if most_mouths.position[0] - 10 - text.get_width() > 0 else most_mouths.position[0] + 10,
+                        most_mouths.position[1] - text.get_height() / 2)
+            window.blit(text, blit_pos)
+
+            # find oldest generation and identify
+            creature = max(zoo.creatures, key=lambda c: c.generation)
+            oldest_generation = creature if oldest_generation is None or oldest_generation.generation > creature.generation else oldest_generation
+            text = stats_font.render('oldest gen (%d)' % oldest_generation.generation, False, text_color)
+
+            # print information alongside the creature
+            blit_pos = (oldest_generation.position[0] - text.get_width() / 2,
+                        oldest_generation.position[1] + 10 if oldest_generation.position[1] + 10 + text.get_height() < height else oldest_generation.position[1] - 10 - text.get_height())
             window.blit(text, blit_pos)
 
         # update screen and fps
@@ -704,10 +733,15 @@ if __name__  == "__main__":
                 min_energy = min(c.energy for c in zoo.creatures)
                 max_energy = max(c.energy for c in zoo.creatures)
                 average_energy = sum(c.energy for c in zoo.creatures) / float(total_creatures)
+
+                min_gen = min(c.generation for c in zoo.creatures)
+                max_gen = max(c.generation for c in zoo.creatures)
+                average_gen = sum(c.generation for c in zoo.creatures) / float(total_creatures)
             else:
                 average_age = max_age = min_age = 0
                 average_mouths = max_mouths = min_mouths = 0
                 average_energy = max_energy = min_energy = 0
+                average_gen = max_gen = min_gen = 0
 
             text_age = stats_font.render("age: %04d %04.2f %04d" % (min_age, average_age, max_age),
                                          False, text_color, background_color)
@@ -715,19 +749,26 @@ if __name__  == "__main__":
                                             False, text_color, background_color)
             text_energy = stats_font.render("energy: %04d %04.2f %04d" % (min_energy, average_energy, max_energy),
                                             False, text_color, background_color)
+            text_gen    = stats_font.render("gen: %04d %04.2f %04d" % (min_gen, average_gen, max_gen),
+                                            False, text_color, background_color)
             text_pop    = stats_font.render("pop/keys: %04d/%04d" % (total_creatures, total_keys),
                                             False, text_color, background_color)
             text_cycle  = stats_font.render("cycle: %08d" % cycle_count,
                                             False, text_color, background_color)
+            text_height = max(text_age.get_height(), text_mouths.get_height(),
+                              text_energy.get_height(), text_energy.get_height(),
+                              text_gen.get_height(), text_pop.get_height(),
+                              text_cycle.get_height())
 
             pygame.draw.rect(window, background_color, ((chart_width+1, height+1),
                                                         (width - chart_width,
                                                          chart_height)))
-            window.blit(text_age,    (chart_width+10, height + 5))
-            window.blit(text_mouths, (chart_width+10, height + 1*font_size + 5))
-            window.blit(text_energy, (chart_width+10, height + 2*font_size + 5))
-            window.blit(text_pop,    (chart_width+10, height + 3*font_size + 5))
-            window.blit(text_cycle,  (chart_width+10, height + 4*font_size + 5))
+            window.blit(text_age,    (chart_width+10, height + 10))
+            window.blit(text_mouths, (chart_width+10, height + 1*text_height + 10))
+            window.blit(text_energy, (chart_width+10, height + 2*text_height + 10))
+            window.blit(text_gen,    (chart_width+10, height + 3*text_height + 10))
+            window.blit(text_pop,    (chart_width+10, height + 4*text_height + 10))
+            window.blit(text_cycle,  (chart_width+10, height + 5*text_height + 10))
 
             # update simulation
             zoo.step()
