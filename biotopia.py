@@ -451,7 +451,7 @@ if __name__  == "__main__":
                         dest='offspring_energy', help='at each reproduction, the amount of energy the offspring starts with')
     parser.add_argument('--energy-loss', '-l', default=1, type=int, metavar='ENERGY',
                         dest='energy_loss', help="the quantity of energy lost at each creature's cycle")
-    parser.add_argument('--energy-gain', '-g', default=10, type=int, metavar='ENERGY',
+    parser.add_argument('--energy-gain', '-g', default=20, type=int, metavar='ENERGY',
                         dest='energy_gain', help="the quantity of energy gain at each food eat")
     parser.add_argument('--start-food', '-f', default=50000, type=int, metavar='AMOUNT',
                         dest='start_food', help="the amount of food the simulation's environment starts with")
