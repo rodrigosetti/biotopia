@@ -657,8 +657,8 @@ if __name__  == "__main__":
                 nearest = None
 
             # find oldest and identify
-            creature = max(zoo.creatures, key=lambda c: c.age)
-            oldest = creature if oldest is None or oldest.age < creature.age else oldest
+            if oldest is None:
+                oldest = max(zoo.creatures, key=lambda c: c.age)
             text = stats_font.render('oldest age (%d)' % oldest.age, False, text_color)
 
             # print information alongside the creature
@@ -697,8 +697,8 @@ if __name__  == "__main__":
             window.blit(text, blit_pos)
 
             # find oldest generation and identify
-            creature = max(zoo.creatures, key=lambda c: c.generation)
-            oldest_generation = creature if oldest_generation is None or oldest_generation.generation > creature.generation else oldest_generation
+            if oldest_generation is None:
+                oldest_generation = min(zoo.creatures, key=lambda c: c.generation)
             text = stats_font.render('oldest gen (%d)' % oldest_generation.generation, False, text_color)
 
             # print information alongside the creature
